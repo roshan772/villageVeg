@@ -40,13 +40,13 @@ export default function LoginScreen() {
         <Text style={{ fontSize: 28, fontWeight: "700", marginBottom: 6 }}>
           Login
         </Text>
-        <Text style={{ marginBottom: 18 }}>Welcome back 👋</Text>
+        <Text style={{ marginBottom: 18 }}>Welcome back</Text>
 
         <Text style={{ marginBottom: 6 }}>Email</Text>
         <TextInput
           value={email}
           onChangeText={setEmail}
-          placeholder="you@email.com"
+          placeholder="your@email.com"
           autoCapitalize="none"
           keyboardType="email-address"
           style={{
