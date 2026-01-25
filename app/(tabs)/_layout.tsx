@@ -24,14 +24,14 @@ export default function TabsLayout() {
       <Tabs.Screen name="cart" options={{ title: "Cart" }} />
       <Tabs.Screen name="orders" options={{ title: "Orders" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
-
-      {/* Admin tab appears only for admins */}
-      {role === "admin" ? (
-        <Tabs.Screen
-          name="../(admin)/products/index"
-          options={{ title: "Admin" }}
-        />
-      ) : null}
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: "Admin",
+          // If not admin, the tab is hidden from the bar
+          href: role === "admin" ? "/admin" : null,
+        }}
+      />
     </Tabs>
   );
 }
