@@ -5,9 +5,28 @@ import {
   TextInput,
   Pressable,
   ActivityIndicator,
+  Image,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useAuth } from "../../src/context/AuthContext";
+
+// ─── Reanimated ────────────────────────────────
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  FadeInDown,
+  FadeInUp,
+  ZoomIn,
+} from "react-native-reanimated";
+
+// Optional: if you want even simpler syntax → import { MotiView } from 'moti';
+
+const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const { login, loading, user } = useAuth();
@@ -17,6 +36,15 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // Animation values
+  const logoScale = useSharedValue(0.3);
+  const buttonOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    logoScale.value = withSpring(1, { damping: 12, stiffness: 120 });
+    buttonOpacity.value = withTiming(1, { duration: 800 });
+  }, []);
+
   useEffect(() => {
     if (user) router.replace("/(tabs)");
   }, [user]);
@@ -25,68 +53,183 @@ export default function LoginScreen() {
     setError(null);
     try {
       await login(email, password);
-      // no need to router.replace here; effect will handle it
     } catch (e: any) {
-      setError(e?.message ?? "Login failed");
+      setError(e?.message ?? "Login failed. Please try again.");
     }
   };
 
+  const animatedLogoStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    opacity: buttonOpacity.value,
+    transform: [{ translateY: buttonOpacity.value * 20 - 20 }],
+  }));
+
   return (
-    <View style={{ flex: 1, padding: 20, justifyContent: "center" }}>
-      <Text style={{ fontSize: 28, fontWeight: "700", marginBottom: 10 }}>
-        Login
-      </Text>
-
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <View
         style={{
-          borderWidth: 1,
-          borderRadius: 10,
-          padding: 12,
-          marginBottom: 12,
-        }}
-      />
-
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
-        style={{
-          borderWidth: 1,
-          borderRadius: 10,
-          padding: 12,
-          marginBottom: 12,
-        }}
-      />
-
-      {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
-
-      <Pressable
-        onPress={onSubmit}
-        disabled={loading}
-        style={{
-          backgroundColor: "#111",
-          padding: 14,
-          borderRadius: 12,
-          alignItems: "center",
-          marginTop: 10,
+          flex: 1,
+          paddingHorizontal: 24,
+          justifyContent: "center",
+          backgroundColor: "#f8fafc", // light natural bg
         }}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={{ color: "#fff", fontWeight: "700" }}>Login</Text>
-        )}
-      </Pressable>
+        {/* Hero / Logo area with animation */}
+        <Animated.View
+          entering={FadeInDown.duration(900).springify().damping(14)}
+          style={{ alignItems: "center", marginBottom: 40 }}
+        >
+          <Animated.Image
+            source={{ uri: "https://example.com/farm-logo.png" }} // ← replace with your fresh veg / leaf / basket logo
+            style={[
+              { width: width * 0.38, height: width * 0.38, marginBottom: 16 },
+              animatedLogoStyle,
+            ]}
+            resizeMode="contain"
+          />
 
-      <Text style={{ marginTop: 14 }}>
-        Don’t have an account? <Link href="/(auth)/register">Register</Link>
-      </Text>
-    </View>
+          <Text
+            style={{
+              fontSize: 32,
+              fontWeight: "800",
+              color: "#1e293b",
+              letterSpacing: -0.5,
+            }}
+          >
+            Fresh From Farm
+          </Text>
+          <Text style={{ color: "#64748b", marginTop: 4, fontSize: 15 }}>
+            Login to get your daily vegetables
+          </Text>
+        </Animated.View>
+
+        {/* Form fields with stagger animation */}
+        <View style={{ gap: 16 }}>
+          <Animated.View entering={FadeInUp.duration(600).delay(100)}>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email address"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholderTextColor="#94a3b8"
+              style={{
+                borderWidth: 1.5,
+                borderColor: "#e2e8f0",
+                borderRadius: 16,
+                padding: 16,
+                fontSize: 16,
+                backgroundColor: "white",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.06,
+                shadowRadius: 6,
+                elevation: 2,
+              }}
+            />
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.duration(600).delay(200)}>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry
+              placeholderTextColor="#94a3b8"
+              style={{
+                borderWidth: 1.5,
+                borderColor: "#e2e8f0",
+                borderRadius: 16,
+                padding: 16,
+                fontSize: 16,
+                backgroundColor: "white",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.06,
+                shadowRadius: 6,
+                elevation: 2,
+              }}
+            />
+          </Animated.View>
+
+          {error && (
+            <Animated.Text
+              entering={FadeInDown}
+              style={{ color: "#ef4444", fontWeight: "500", marginTop: 4 }}
+            >
+              {error}
+            </Animated.Text>
+          )}
+        </View>
+
+        {/* Animated Login Button */}
+        <Animated.View style={[{ marginTop: 28 }, animatedButtonStyle]}>
+          <Pressable
+            onPress={onSubmit}
+            disabled={loading}
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed ? "#0f172a" : "#111827",
+                paddingVertical: 18,
+                borderRadius: 16,
+                alignItems: "center",
+                shadowColor: "#111827",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.25,
+                shadowRadius: 12,
+                elevation: 6,
+              },
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 17,
+                  fontWeight: "700",
+                  letterSpacing: 0.2,
+                }}
+              >
+                Sign In
+              </Text>
+            )}
+          </Pressable>
+        </Animated.View>
+
+        {/* Register link */}
+        <Animated.View
+          entering={FadeInUp.duration(600).delay(400)}
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            marginTop: 24,
+            gap: 6,
+          }}
+        >
+          <Text style={{ color: "#64748b", fontSize: 15 }}>
+            New to Fresh Farm?
+          </Text>
+          <Link href="/(auth)/register">
+            <Text
+              style={{
+                color: "#15803d",
+                fontWeight: "600",
+                fontSize: 15,
+              }}
+            >
+              Create account
+            </Text>
+          </Link>
+        </Animated.View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }

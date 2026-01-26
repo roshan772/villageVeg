@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { getProducts } from "../../src/services/productsService";
 import { Product } from "../../src/types/product";
+import ProductCard from "@/src/components/ProductCard";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -47,24 +48,11 @@ export default function HomeScreen() {
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text>No products available.</Text>}
         renderItem={({ item }) => (
-          <Pressable
+          <ProductCard
+            product={item}
             onPress={() => router.push(`/product/${item.id}`)}
-            style={{
-              borderWidth: 1,
-              borderRadius: 12,
-              padding: 12,
-              marginBottom: 10,
-            }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: "700" }}>{item.name}</Text>
-            <Text>
-              Rs. {item.price} / {item.unit}
-            </Text>
-            <Text>Stock: {item.stock}</Text>
-            <Text>Category: {item.category}</Text>
-          </Pressable>
+          />
         )}
       />
     </View>
