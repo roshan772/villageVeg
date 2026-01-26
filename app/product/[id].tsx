@@ -1,12 +1,15 @@
 // app/product/[id].tsx
-import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { getProductById } from "../../src/services/productsService"; 
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
+import { useCart } from "../../src/context/CartContext";
+import { getProductById } from "../../src/services/productsService";
 import { Product } from "../../src/types/product";
 
 export default function ProductDetailsScreen() {
   const router = useRouter();
+  const { addToCart } = useCart();
+
   const params = useLocalSearchParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -75,6 +78,21 @@ export default function ProductDetailsScreen() {
         }}
       >
         <Text style={{ color: "#fff", fontWeight: "800" }}>Back</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => {
+          addToCart(product, 1);
+          Alert.alert("Added", `${product.name} added to cart`);
+        }}
+        style={{
+          marginTop: 12,
+          backgroundColor: "#16a34a",
+          padding: 12,
+          borderRadius: 12,
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "800" }}>Add to Cart</Text>
       </Pressable>
     </View>
   );
