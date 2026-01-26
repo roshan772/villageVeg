@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { getProducts } from "../../src/services/productsService"; // change if needed
+import { getProducts } from "../../src/services/productsService";
 import { Product } from "../../src/types/product";
 
 export default function HomeScreen() {
@@ -41,7 +41,7 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, padding: 16 }}>
       <Text style={{ fontSize: 22, fontWeight: "800", marginBottom: 12 }}>
-        Fresh Vegetables 🥕
+        Fresh Vegetables
       </Text>
 
       <FlatList
