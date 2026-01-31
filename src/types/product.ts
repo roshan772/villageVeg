@@ -1,5 +1,6 @@
 
 export interface Product {
+  isHotDeal: boolean;
   id: string;
   name: string;
   price: number;
@@ -10,4 +11,11 @@ export interface Product {
   image?: string;
   createdAt: string;
   createdBy: string;
+
+  discountPercent?: number;
+  originalPrice?: number;
+  rating?: number;
+  ratingCount?: number;
+  soldCount?: number;
+  freeDelivery?: boolean;
 }

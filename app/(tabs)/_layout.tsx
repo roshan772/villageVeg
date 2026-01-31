@@ -2,9 +2,12 @@ import { Tabs, Redirect } from "expo-router";
 import { ActivityIndicator, View, Platform } from "react-native";
 import { useAuth } from "../../src/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useCart } from "@/src/context/CartContext";
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
+  const { items } = useCart(); 
+  const cartCount = items.reduce((sum, item) => sum + item.qty, 0);
 
   if (loading) {
     return (
@@ -29,8 +32,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#16a34a",          // fresh farm green
-        tabBarInactiveTintColor: "#9ca3af",        // cooler gray
+        tabBarActiveTintColor: "#16a34a", // fresh farm green
+        tabBarInactiveTintColor: "#9ca3af", // cooler gray
         tabBarShowLabel: true,
         tabBarStyle: {
           backgroundColor: "#ffffff",
@@ -61,7 +64,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index" // or "home" / "farm"
+        name="index"
         options={{
           title: "Farm",
           tabBarIcon: ({ color, focused }) => (
@@ -85,10 +88,13 @@ export default function TabsLayout() {
               color={color}
             />
           ),
-          tabBarBadge: 0, // you can make this dynamic later
+          tabBarBadge: cartCount > 0 ? cartCount : undefined, // ← this line shows real count
           tabBarBadgeStyle: {
-            backgroundColor: "#ef4444",
+            backgroundColor: "#ef4444", 
             fontSize: 10,
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
           },
         }}
       />

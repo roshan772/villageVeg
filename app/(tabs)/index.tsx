@@ -4,29 +4,42 @@ import {
   FlatList,
   Pressable,
   Text,
+  TextInput,
   View,
   ActivityIndicator,
   RefreshControl,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { getProducts } from "../../src/services/productsService";
 import { Product } from "../../src/types/product";
 import ProductCard from "@/src/components/ProductCard";
 
+const tabs = ["For You", "Hot Deals", "New Arrivals", "Top Rated"];
+
 export default function HomeScreen() {
   const router = useRouter();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("For You");
 
   const fetchProducts = useCallback(async () => {
     try {
       setError(null);
       const data = await getProducts();
-      setProducts(data || []);
+      // Optional: sort newest first globally (helps New Arrivals)
+      const sorted = data.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+      setAllProducts(sorted || []);
     } catch (err: any) {
       setError("Failed to load products. Please try again.");
       console.error("Products fetch error:", err);
@@ -41,6 +54,26 @@ export default function HomeScreen() {
     })();
   }, [fetchProducts]);
 
+  // Filter / sort when tab or products change
+  useEffect(() => {
+    let filtered = [...allProducts];
+
+    if (activeTab === "Hot Deals") {
+      filtered = filtered.filter((p) => p.isHotDeal === true).slice(0, 2);
+    } else if (activeTab === "New Arrivals") {
+      // Already sorted newest first in fetch → just take first few
+      filtered = filtered.slice(0, 6);
+    } else if (activeTab === "Top Rated") {
+      filtered = filtered
+        .filter((p) => p.rating !== undefined)
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+        .slice(0, 6);
+    }
+    // "For You" → show all (no filter)
+
+    setDisplayedProducts(filtered);
+  }, [activeTab, allProducts]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchProducts();
@@ -51,18 +84,53 @@ export default function HomeScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={styles.loadingText}>Loading fresh vegetables...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Fresh From Farm</Text>
-        <Text style={styles.subtitle}>Daily harvested vegetables</Text>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#64748b"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            placeholder="Search vegetables, fruits..."
+            placeholderTextColor="#94a3b8"
+            style={styles.searchInput}
+          />
+        </View>
       </View>
+
+      {/* Tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabScroll}
+        contentContainerStyle={styles.tabContent}
+      >
+        {tabs.map((tab) => (
+          <Pressable
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab && styles.tabTextActive,
+              ]}
+            >
+              {tab}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
       {error ? (
         <View style={styles.errorContainer}>
@@ -71,26 +139,36 @@ export default function HomeScreen() {
             <Text style={styles.retryText}>Try Again</Text>
           </Pressable>
         </View>
-      ) : products.length === 0 ? (
+      ) : displayedProducts.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No products available right now</Text>
+          <Text style={styles.emptyText}>
+            {activeTab === "Hot Deals"
+              ? "No hot deals right now"
+              : activeTab === "New Arrivals"
+                ? "No new arrivals yet"
+                : activeTab === "Top Rated"
+                  ? "No top rated products yet"
+                  : "No products available right now"}
+          </Text>
           <Text style={styles.emptySubtext}>
             Please check back later or refresh
           </Text>
         </View>
       ) : (
         <FlatList
-          data={products}
+          data={displayedProducts}
           keyExtractor={(item) => item.id}
+          numColumns={2}
           renderItem={({ item }) => (
-            <ProductCard
-              product={item}
-              onPress={() => router.push(`/product/${item.id}`)}
-              // Optional: you can pass onAddToCart if you want quick add from list
-              // onAddToCart={() => addToCart(item)}
-            />
+            <View style={styles.cardWrapper}>
+              <ProductCard
+                product={item}
+                onPress={() => router.push(`/product/${item.id}`)}
+              />
+            </View>
           )}
           contentContainerStyle={styles.listContent}
+          columnWrapperStyle={styles.columnWrapper}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -106,43 +184,39 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
+  container: { flex: 1, backgroundColor: "#f8fafc" },
+  searchContainer: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    zIndex: 10,
   },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+  },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 16, color: "#1e293b" },
+  tabScroll: { backgroundColor: "#ffffff", height: 44 },
+  tabContent: { paddingHorizontal: 16, alignItems: "center" },
+  tabItem: { paddingHorizontal: 16, paddingVertical: 10, marginRight: 8 },
+  tabItemActive: { borderBottomWidth: 3, borderBottomColor: "#16a34a" },
+  tabText: { fontSize: 14, fontWeight: "600", color: "#64748b" },
+  tabTextActive: { color: "#16a34a", fontWeight: "700" },
+  listContent: { paddingHorizontal: 8, paddingBottom: 24 },
+  columnWrapper: { justifyContent: "space-between" },
+  cardWrapper: { flex: 1, margin: 4, maxWidth: "48%" },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f8fafc",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#64748b",
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: "#ffffff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#1e293b",
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#64748b",
-    marginTop: 4,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
   },
   errorContainer: {
     flex: 1,

@@ -7,6 +7,7 @@ import {
   ScrollView,
   Text,
   View,
+  Image,
   StyleSheet,
   Platform,
 } from "react-native";
@@ -17,23 +18,24 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+import { Ionicons } from "@expo/vector-icons";
 import { useCart } from "../../src/context/CartContext";
 import { getProductById } from "../../src/services/productsService";
 import { Product } from "../../src/types/product";
+import { productImages } from "../../src/utils/productImages";
 
 export default function ProductDetailsScreen() {
   const router = useRouter();
   const { addToCart } = useCart();
-
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
 
   const buttonScale = useSharedValue(1);
-
   const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: buttonScale.value }],
   }));
@@ -68,35 +70,28 @@ export default function ProductDetailsScreen() {
       Alert.alert("Not enough stock", `Only ${product.stock} available`);
       return;
     }
-
     addToCart(product, quantity);
-    Alert.alert("Added to Cart", `${quantity} × ${product.name} added`);
+    Alert.alert("Added", `${quantity} × ${product.name} added to cart`);
   };
 
-  const onPressIn = () => {
-    buttonScale.value = withSpring(0.94, { damping: 12 });
-  };
-
-  const onPressOut = () => {
-    buttonScale.value = withSpring(1, { damping: 12 });
-  };
+  const onPressIn = () => (buttonScale.value = withSpring(0.94));
+  const onPressOut = () => (buttonScale.value = withSpring(1));
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.loading}>
         <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={styles.loadingText}>Loading product details...</Text>
       </View>
     );
   }
 
   if (error || !product) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={styles.error}>
         <Text style={styles.errorTitle}>Oops!</Text>
         <Text style={styles.errorText}>{error || "Product not found"}</Text>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backBtnText}>Go Back</Text>
         </Pressable>
       </View>
     );
@@ -104,126 +99,172 @@ export default function ProductDetailsScreen() {
 
   const isOutOfStock = product.stock <= 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
+  const discountPercent = product.discountPercent || 0;
+  const hasDiscount = discountPercent > 0;
+  const originalPrice = product.originalPrice || product.price;
+
+  // Image source with safe fallback
+  const imageSource =
+    product.image && productImages[product.image]
+      ? productImages[product.image]
+      : productImages["default.png"];
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-        <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.price}>
-          Rs. {product.price.toFixed(0)}{" "}
-          <Text style={styles.unit}>/ {product.unit}</Text>
-        </Text>
-      </Animated.View>
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero Image */}
+        <View style={styles.hero}>
+          {imageSource ? (
+            <>
+              <Image
+                source={imageSource}
+                style={styles.heroImage}
+                resizeMode="cover"
+                onLoadEnd={() => setImageLoading(false)}
+              />
+              {imageLoading && (
+                <ActivityIndicator
+                  size="large"
+                  color="#16a34a"
+                  style={StyleSheet.absoluteFillObject}
+                />
+              )}
+            </>
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Ionicons name="image-outline" size={60} color="#d1d5db" />
+              <Text style={styles.placeholderText}>No image</Text>
+            </View>
+          )}
 
-      <Animated.View entering={FadeInDown.duration(700).delay(100)}>
-        <View style={styles.metaContainer}>
-          <View style={styles.metaItem}>
-            <Text style={styles.metaLabel}>Category</Text>
-            <Text style={styles.metaValue}>{product.category}</Text>
+          {hasDiscount && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>-{discountPercent}%</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Main Info */}
+        <View style={styles.mainInfo}>
+          <Text style={styles.name}>{product.name}</Text>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.currentPrice}>
+              Rs. {product.price.toFixed(0)}
+              <Text style={styles.unit}> / {product.unit}</Text>
+            </Text>
+            {hasDiscount && (
+              <Text style={styles.oldPrice}>
+                Rs. {originalPrice.toFixed(0)}
+              </Text>
+            )}
           </View>
 
-          <View style={styles.metaItem}>
-            <Text style={styles.metaLabel}>Stock</Text>
-            <Text
-              style={[
-                styles.metaValue,
-                isOutOfStock && styles.stockOut,
-                isLowStock && styles.stockLow,
-              ]}
-            >
-              {isOutOfStock
-                ? "Out of stock"
-                : isLowStock
-                  ? `Only ${product.stock} left`
-                  : `${product.stock} available`}
+          <View style={styles.metaRow}>
+            <View style={styles.rating}>
+              <Ionicons name="star" size={16} color="#f59e0b" />
+              <Text style={styles.ratingText}>
+                {product.rating?.toFixed(1) || "4.5"} •{" "}
+                {product.ratingCount || 130} ratings
+              </Text>
+            </View>
+            <Text style={styles.sold}>
+              {product.soldCount?.toLocaleString() || "1.2k"} Sold
             </Text>
           </View>
+
+          <View style={styles.badges}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {isOutOfStock
+                  ? "Out of Stock"
+                  : isLowStock
+                    ? "Low Stock"
+                    : "In Stock"}
+              </Text>
+            </View>
+            {product.freeDelivery && (
+              <View style={[styles.badge, styles.freeDeliveryBadge]}>
+                <Text style={styles.freeDeliveryText}>FREE DELIVERY</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.sectionTitle}>Category</Text>
+          <Text style={styles.category}>{product.category}</Text>
+
+          {product.description && (
+            <>
+              <Text style={styles.sectionTitle}>Description</Text>
+              <Text style={styles.description}>{product.description}</Text>
+            </>
+          )}
         </View>
-      </Animated.View>
 
-      {product.description && (
-        <Animated.View entering={FadeInDown.duration(700).delay(200)}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.description}>{product.description}</Text>
-        </Animated.View>
-      )}
+        {/* Bottom padding */}
+        <View style={{ height: 140 }} />
+      </ScrollView>
 
+      {/* Fixed Bottom Bar */}
       {!isOutOfStock && (
-        <Animated.View entering={FadeInDown.duration(700).delay(300)}>
-          <Text style={styles.sectionTitle}>Quantity</Text>
-          <View style={styles.quantityContainer}>
+        <View style={styles.bottomBar}>
+          <View style={styles.quantitySelector}>
             <Pressable
               onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-              style={styles.quantityBtn}
+              style={styles.qtyBtn}
             >
-              <Text style={styles.quantityText}>-</Text>
+              <Text style={styles.qtyText}>-</Text>
             </Pressable>
 
-            <Text style={styles.quantityDisplay}>{quantity}</Text>
+            <Text style={styles.qtyDisplay}>{quantity}</Text>
 
             <Pressable
               onPress={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-              style={styles.quantityBtn}
+              style={styles.qtyBtn}
             >
-              <Text style={styles.quantityText}>+</Text>
+              <Text style={styles.qtyText}>+</Text>
             </Pressable>
           </View>
-        </Animated.View>
-      )}
 
-      <Animated.View entering={FadeInDown.duration(700).delay(400)}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Back to Farm</Text>
-        </Pressable>
-
-        {!isOutOfStock && (
           <Pressable
             onPress={handleAddToCart}
             onPressIn={onPressIn}
             onPressOut={onPressOut}
-            disabled={loading}
             style={({ pressed }) => [
-              styles.addToCartButton,
-              pressed && styles.addToCartButtonPressed,
+              styles.addButton,
+              pressed && styles.addButtonPressed,
               animatedButtonStyle,
             ]}
           >
-            <Text style={styles.addToCartText}>
-              Add {quantity} to Cart • Rs.{" "}
-              {(product.price * quantity).toFixed(0)}
+            <Text style={styles.addButtonText}>
+              Add • Rs. {(product.price * quantity).toFixed(0)}
             </Text>
           </Pressable>
-        )}
-      </Animated.View>
-    </ScrollView>
+        </View>
+      )}
+
+      <Pressable onPress={() => router.back()} style={styles.backFab}>
+        <Ionicons name="arrow-back" size={24} color="#ffffff" />
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
-  content: {
-    padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 100 : 80,
-  },
-  loadingContainer: {
+  container: { flex: 1, backgroundColor: "#f8fafc" },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 180 },
+  loading: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f8fafc",
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#64748b",
-  },
-  errorContainer: {
+  error: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -231,8 +272,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
   },
   errorTitle: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 28,
+    fontWeight: "800",
     color: "#1e293b",
     marginBottom: 12,
   },
@@ -242,116 +283,182 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
   },
-  header: {
-    marginBottom: 24,
+  hero: {
+    height: 320,
+    backgroundColor: "#ffffff",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
+  imagePlaceholder: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+  },
+  placeholderText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#94a3b8",
+  },
+  discountBadge: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    backgroundColor: "#ef4444",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  discountText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  mainInfo: {
+    padding: 20,
+    backgroundColor: "#ffffff",
   },
   name: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
     color: "#1e293b",
-    letterSpacing: -0.5,
+    marginBottom: 12,
   },
-  price: {
-    fontSize: 24,
-    fontWeight: "700",
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 12,
+  },
+  currentPrice: {
+    fontSize: 28,
+    fontWeight: "800",
     color: "#16a34a",
-    marginTop: 8,
   },
   unit: {
     fontSize: 16,
-    fontWeight: "500",
     color: "#64748b",
+    fontWeight: "500",
   },
-  metaContainer: {
+  oldPrice: {
+    fontSize: 18,
+    color: "#94a3b8",
+    textDecorationLine: "line-through",
+  },
+  metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 24,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    alignItems: "center",
+    marginBottom: 16,
   },
-  metaItem: {
-    flex: 1,
+  rating: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  metaLabel: {
-    fontSize: 13,
-    color: "#64748b",
-    marginBottom: 4,
-  },
-  metaValue: {
-    fontSize: 16,
+  ratingText: {
+    fontSize: 15,
     fontWeight: "600",
-    color: "#1e293b",
+    color: "#4b5563",
   },
-  stockOut: {
-    color: "#ef4444",
+  sold: {
+    fontSize: 14,
+    color: "#64748b",
   },
-  stockLow: {
-    color: "#f59e0b",
+  badges: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  badge: {
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  freeDeliveryBadge: {
+    backgroundColor: "#dcfce7",
+  },
+  badgeText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  freeDeliveryText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#15803d",
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#1e293b",
-    marginBottom: 12,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  category: {
+    fontSize: 16,
+    color: "#64748b",
   },
   description: {
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 24,
     color: "#4b5563",
-    backgroundColor: "#ffffff",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
   },
-  quantityContainer: {
+  quantitySelector: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 8,
-    marginBottom: 24,
-  },
-  quantityBtn: {
-    width: 48,
-    height: 48,
-    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f1f5f9",
     borderRadius: 12,
+    padding: 6,
   },
-  quantityText: {
+  qtyBtn: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+  },
+  qtyText: {
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#1e293b",
   },
-  quantityDisplay: {
-    flex: 1,
+  qtyDisplay: {
+    minWidth: 60,
     textAlign: "center",
     fontSize: 20,
     fontWeight: "700",
     color: "#16a34a",
   },
-  backButton: {
-    backgroundColor: "#111827",
-    paddingVertical: 16,
-    borderRadius: 12,
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#ffffff",
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    padding: 16,
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    gap: 12,
+    paddingBottom: Platform.OS === "ios" ? 34 : 16,
   },
-  backButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  addToCartButton: {
+  addButton: {
+    flex: 1,
     backgroundColor: "#16a34a",
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
     shadowColor: "#16a34a",
@@ -360,12 +467,35 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  addToCartButtonPressed: {
+  addButtonPressed: {
     backgroundColor: "#15803d",
   },
-  addToCartText: {
+  addButtonText: {
     color: "#ffffff",
     fontSize: 17,
+    fontWeight: "700",
+  },
+  backFab: {
+    position: "absolute",
+    top: 48,
+    left: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backBtn: {
+    marginTop: 20,
+    backgroundColor: "#111827",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  backBtnText: {
+    color: "#ffffff",
+    fontSize: 16,
     fontWeight: "700",
   },
 });
