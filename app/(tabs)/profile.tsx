@@ -8,15 +8,19 @@ import {
   ScrollView,
   StyleSheet,
   Platform,
+  TouchableOpacity,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../src/context/AuthContext";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, role, logout } = useAuth();
+
+  const displayName = user?.email?.split("@")[0] || "User";
+  const firstName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
 
   const onLogout = () => {
     Alert.alert(
@@ -41,86 +45,134 @@ export default function ProfileScreen() {
     );
   };
 
-  const displayName = user?.email?.split("@")[0] || "User";
-
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header / Greeting */}
+      {/* Profile Header */}
       <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person-circle" size={90} color="#16a34a" />
-        </View>
-        <Text style={styles.greeting}>Hello, {displayName}</Text>
-        <Text style={styles.email}>{user?.email ?? "No email"}</Text>
-      </Animated.View>
-
-      {/* User Info Card */}
-      <Animated.View entering={FadeInDown.duration(700).delay(100)}>
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Email</Text>
-            <Text style={styles.infoValue}>{user?.email ?? "-"}</Text>
+        <View style={styles.avatarWrapper}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{firstName.charAt(0)}</Text>
           </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Role</Text>
-            <Text
-              style={[styles.infoValue, role === "admin" && styles.adminRole]}
-            >
-              {role ? role.charAt(0).toUpperCase() + role.slice(1) : "-"}
-            </Text>
-          </View>
-
-          {/* You can add more fields later */}
-          {/* <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Joined</Text>
-            <Text style={styles.infoValue}>Jan 2025</Text>
-          </View> */}
+          <View style={styles.onlineDot} />
         </View>
-      </Animated.View>
 
-      {/* Actions */}
-      <Animated.View
-        entering={FadeInDown.duration(700).delay(200)}
-        style={styles.actionsContainer}
-      >
+        <Text style={styles.greeting}>Hi, {firstName}</Text>
+        <Text style={styles.email}>{user?.email || "No email"}</Text>
+
         {role === "admin" && (
-          <Pressable
-            onPress={() => router.push("/(admin)/products")}
-            style={({ pressed }) => [
-              styles.adminButton,
-              pressed && styles.adminButtonPressed,
-            ]}
-          >
-            <Ionicons
-              name="settings-sharp"
-              size={20}
+          <View style={styles.adminBadge}>
+            <MaterialIcons
+              name="admin-panel-settings"
+              size={14}
               color="#ffffff"
-              style={{ marginRight: 8 }}
             />
-            <Text style={styles.adminButtonText}>Admin Dashboard</Text>
-          </Pressable>
+            <Text style={styles.adminBadgeText}>Admin</Text>
+          </View>
         )}
+      </Animated.View>
 
-        <Pressable
-          onPress={onLogout}
-          style={({ pressed }) => [
-            styles.logoutButton,
-            pressed && styles.logoutButtonPressed,
-          ]}
-        >
-          <Ionicons
-            name="log-out-outline"
-            size={20}
-            color="#ffffff"
-            style={{ marginRight: 8 }}
-          />
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </Pressable>
+      {/* Account Info Card */}
+      <Animated.View entering={FadeInDown.duration(700).delay(100)}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Account Details</Text>
+
+          <View style={styles.infoRow}>
+            <View style={styles.infoIcon}>
+              <Ionicons name="mail-outline" size={20} color="#64748b" />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoValue}>{user?.email ?? "-"}</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <View style={styles.infoIcon}>
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={20}
+                color="#64748b"
+              />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Role</Text>
+              <Text
+                style={[
+                  styles.infoValue,
+                  role === "admin" && styles.adminValue,
+                ]}
+              >
+                {role ? role.charAt(0).toUpperCase() + role.slice(1) : "-"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Add more rows later (phone, joined date, etc.) */}
+        </View>
+      </Animated.View>
+
+      {/* Quick Actions */}
+      <Animated.View entering={FadeInDown.duration(700).delay(200)}>
+        <View style={styles.actionsCard}>
+          {role === "admin" && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push("/(admin)/products")}
+              style={styles.actionRow}
+            >
+              <View
+                style={[styles.actionIcon, { backgroundColor: "#2563eb15" }]}
+              >
+                <MaterialIcons
+                  name="admin-panel-settings"
+                  size={24}
+                  color="#2563eb"
+                />
+              </View>
+              <View style={styles.actionContent}>
+                <Text style={styles.actionTitle}>Admin Dashboard</Text>
+                <Text style={styles.actionSubtitle}>
+                  Manage products & orders
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={onLogout}
+            style={styles.actionRow}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: "#ef444415" }]}>
+              <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={[styles.actionTitle, { color: "#ef4444" }]}>
+                Logout
+              </Text>
+              <Text style={styles.actionSubtitle}>
+                Sign out of your account
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+
+      {/* Footer / Version info */}
+      <Animated.View
+        entering={FadeInUp.duration(800).delay(300)}
+        style={styles.footer}
+      >
+        <Text style={styles.version}>Village Veg • v1.0.0</Text>
+        <Text style={styles.copyright}>© 2025 Fresh From Farm</Text>
       </Animated.View>
     </ScrollView>
   );
@@ -129,7 +181,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f9fafb",
   },
   content: {
     padding: 20,
@@ -139,89 +191,172 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 32,
   },
-  avatarContainer: {
-    marginBottom: 12,
-    backgroundColor: "#f0fdf4",
-    borderRadius: 999,
-    padding: 8,
+  avatarWrapper: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#16a34a",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 4,
+    borderColor: "#ffffff",
+    shadowColor: "#16a34a",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  avatarText: {
+    fontSize: 42,
+    fontWeight: "700",
+    color: "#ffffff",
+  },
+  onlineDot: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#22c55e",
+    borderWidth: 3,
+    borderColor: "#ffffff",
   },
   greeting: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
     color: "#1e293b",
-    marginBottom: 4,
+    marginBottom: 6,
   },
   email: {
     fontSize: 16,
     color: "#64748b",
+    marginBottom: 12,
   },
-  infoCard: {
+  adminBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+  },
+  adminBadgeText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
+    marginLeft: 6,
+  },
+  card: {
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#e5e7eb",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+  },
+  infoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#f1f5f9",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  infoContent: {
+    flex: 1,
   },
   infoLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: "#64748b",
-    fontWeight: "500",
+    marginBottom: 4,
   },
   infoValue: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: "#1e293b",
   },
-  adminRole: {
+  adminValue: {
     color: "#16a34a",
-    fontWeight: "700",
   },
-  actionsContainer: {
-    gap: 12,
+  divider: {
+    height: 1,
+    backgroundColor: "#f1f5f9",
+    marginVertical: 4,
   },
-  adminButton: {
+  actionsCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  actionRow: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 18,
+    backgroundColor: "#ffffff",
+  },
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     justifyContent: "center",
-    backgroundColor: "#2563eb",
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  adminButtonPressed: {
-    backgroundColor: "#1d4ed8",
-  },
-  adminButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  logoutButton: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ef4444",
-    paddingVertical: 16,
-    borderRadius: 12,
+    marginRight: 16,
   },
-  logoutButtonPressed: {
-    backgroundColor: "#dc2626",
+  actionContent: {
+    flex: 1,
   },
-  logoutButtonText: {
-    color: "#ffffff",
+  actionTitle: {
     fontSize: 16,
     fontWeight: "700",
+    color: "#1e293b",
+  },
+  actionSubtitle: {
+    fontSize: 13,
+    color: "#64748b",
+    marginTop: 2,
+  },
+  footer: {
+    alignItems: "center",
+    marginTop: 32,
+    paddingBottom: 40,
+  },
+  version: {
+    fontSize: 13,
+    color: "#94a3b8",
+    marginBottom: 4,
+  },
+  copyright: {
+    fontSize: 12,
+    color: "#cbd5e1",
   },
 });

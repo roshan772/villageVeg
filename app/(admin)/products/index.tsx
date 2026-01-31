@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import {
   deleteProduct,
   getProducts,
@@ -54,7 +54,7 @@ export default function AdminProductsScreen() {
   const confirmDelete = (id: string, name: string) => {
     Alert.alert(
       "Delete Product",
-      `Are you sure you want to delete "${name}"?\nThis action cannot be undone.`,
+      `Are you sure you want to delete "${name}"?\nThis cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -65,7 +65,7 @@ export default function AdminProductsScreen() {
             try {
               await deleteProduct(id);
               await loadProducts();
-              Alert.alert("Success", "Product deleted");
+              Alert.alert("Success", "Product deleted successfully");
             } catch (e: any) {
               Alert.alert("Error", e?.message || "Failed to delete product");
             } finally {
@@ -89,7 +89,15 @@ export default function AdminProductsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Manage Products</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Manage Products</Text>
+          <Text style={styles.headerSubtitle}>
+            {products.length} {products.length === 1 ? "product" : "products"}
+          </Text>
+        </View>
+      </View>
 
       <FlatList
         data={products}
@@ -105,6 +113,7 @@ export default function AdminProductsScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
+            <MaterialIcons name="inventory-2" size={80} color="#d1d5db" />
             <Text style={styles.emptyTitle}>No products yet</Text>
             <Text style={styles.emptySubtitle}>
               Tap the + button to add your first product
@@ -112,30 +121,47 @@ export default function AdminProductsScreen() {
           </View>
         }
         renderItem={({ item, index }) => (
-          <Animated.View entering={FadeInDown.duration(500).delay(index * 60)}>
-            <View style={styles.productCard}>
+          <Animated.View entering={FadeInDown.duration(500).delay(index * 80)}>
+            <Pressable
+              onPress={() => router.push(`/(admin)/products/edit/${item.id}`)}
+              style={({ pressed }) => [
+                styles.productCard,
+                pressed && styles.productCardPressed,
+              ]}
+            >
+              {/* Product Info */}
               <View style={styles.productInfo}>
-                <Text style={styles.productName}>{item.name}</Text>
+                <Text style={styles.productName} numberOfLines={2}>
+                  {item.name}
+                </Text>
                 <Text style={styles.productPrice}>
                   Rs. {item.price} / {item.unit}
                 </Text>
+
                 <View style={styles.metaRow}>
-                  <Text
+                  <View
                     style={[
-                      styles.stockText,
+                      styles.stockBadge,
                       item.stock <= 0
-                        ? styles.stockOut
+                        ? styles.stockOutBadge
                         : item.stock <= 5
-                          ? styles.stockLow
-                          : null,
+                          ? styles.stockLowBadge
+                          : styles.stockOkBadge,
                     ]}
                   >
-                    Stock: {item.stock}
-                  </Text>
+                    <Text style={styles.stockText}>
+                      {item.stock <= 0
+                        ? "Out of stock"
+                        : item.stock <= 5
+                          ? `Low: ${item.stock}`
+                          : `In stock: ${item.stock}`}
+                    </Text>
+                  </View>
                   <Text style={styles.categoryText}>{item.category}</Text>
                 </View>
               </View>
 
+              {/* Actions */}
               <View style={styles.actionButtons}>
                 <Pressable
                   onPress={() =>
@@ -146,8 +172,8 @@ export default function AdminProductsScreen() {
                     pressed && styles.editButtonPressed,
                   ]}
                 >
-                  <Ionicons name="pencil" size={18} color="#ffffff" />
-                  <Text style={styles.buttonText}>Edit</Text>
+                  <MaterialIcons name="edit" size={18} color="#2563eb" />
+                  <Text style={styles.editText}>Edit</Text>
                 </Pressable>
 
                 <Pressable
@@ -163,13 +189,13 @@ export default function AdminProductsScreen() {
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
                     <>
-                      <Ionicons name="trash" size={18} color="#ffffff" />
-                      <Text style={styles.buttonText}>Delete</Text>
+                      <MaterialIcons name="delete" size={18} color="#ef4444" />
+                      <Text style={styles.deleteText}>Delete</Text>
                     </>
                   )}
                 </Pressable>
               </View>
-            </View>
+            </Pressable>
           </Animated.View>
         )}
       />
@@ -188,26 +214,40 @@ export default function AdminProductsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f9fafb",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f9fafb",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
     color: "#64748b",
+    fontWeight: "500",
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#1e293b",
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#1e293b",
+  },
+  headerSubtitle: {
+    fontSize: 15,
+    color: "#64748b",
+    fontWeight: "500",
   },
   listContent: {
     paddingHorizontal: 16,
@@ -217,14 +257,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginVertical: 8,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#e5e7eb",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  productCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.98 }],
   },
   productInfo: {
     marginBottom: 12,
@@ -233,71 +277,83 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#1e293b",
+    marginBottom: 6,
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 17,
+    fontWeight: "700",
     color: "#16a34a",
-    marginTop: 4,
+    marginBottom: 8,
   },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
+    alignItems: "center",
+  },
+  stockBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  stockOkBadge: {
+    backgroundColor: "#dcfce7",
+  },
+  stockLowBadge: {
+    backgroundColor: "#fef3c7",
+  },
+  stockOutBadge: {
+    backgroundColor: "#fee2e2",
   },
   stockText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#64748b",
-  },
-  stockOut: {
-    color: "#ef4444",
-    fontWeight: "700",
-  },
-  stockLow: {
-    color: "#f59e0b",
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "600",
   },
   categoryText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#64748b",
     fontStyle: "italic",
   },
   actionButtons: {
     flexDirection: "row",
     gap: 12,
+    marginTop: 12,
   },
   editButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#2563eb15",
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 8,
   },
   editButtonPressed: {
-    backgroundColor: "#1d4ed8",
+    backgroundColor: "#2563eb30",
+  },
+  editText: {
+    color: "#2563eb",
+    fontWeight: "700",
+    fontSize: 14,
   },
   deleteButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ef4444",
+    backgroundColor: "#ef444415",
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 8,
   },
   deleteButtonPressed: {
-    backgroundColor: "#dc2626",
+    backgroundColor: "#ef444430",
   },
   deleteButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
-  buttonText: {
-    color: "#ffffff",
+  deleteText: {
+    color: "#ef4444",
     fontWeight: "700",
     fontSize: 14,
   },
@@ -305,8 +361,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 40,
-    paddingVertical: 60,
+    paddingVertical: 100,
   },
   emptyTitle: {
     fontSize: 22,
@@ -330,12 +385,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#16a34a",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 10,
+    elevation: 10,
   },
   fabPressed: {
     backgroundColor: "#15803d",
+    transform: [{ scale: 0.92 }],
   },
 });

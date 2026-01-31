@@ -29,7 +29,7 @@ import Animated, {
 const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
-  const { login, loading, user } = useAuth();
+  const { login, loading, user, role } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -44,10 +44,16 @@ export default function LoginScreen() {
     logoScale.value = withSpring(1, { damping: 12, stiffness: 120 });
     buttonOpacity.value = withTiming(1, { duration: 800 });
   }, []);
-
   useEffect(() => {
-    if (user) router.replace("/(tabs)");
-  }, [user]);
+    if (user) {
+      // Wait for role to be fetched (small delay or check loading)
+      if (role === "admin") {
+        router.replace("/(admin)"); // ← dashboard
+      } else {
+        router.replace("/(tabs)");
+      }
+    }
+  }, [user, role]); // ← add role dependency
 
   const onSubmit = async () => {
     setError(null);

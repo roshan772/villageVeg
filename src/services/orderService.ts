@@ -9,6 +9,7 @@ import {
   orderBy,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Order } from "../types/order";
@@ -77,4 +78,27 @@ export const getOrderById = async (id: string): Promise<Order> => {
     status: data.status || "placed",
     createdAt: data.createdAt || "",
   };
+};
+
+
+// Get ALL orders (admin only)
+export const getAllOrders = async (): Promise<Order[]> => {
+  const q = query(
+    collection(db, "orders"),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({
+    id: d.id,
+    ...d.data(),
+  } as Order));
+};
+
+// Update order status (admin)
+export const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const orderRef = doc(db, "orders", orderId);
+  await updateDoc(orderRef, {
+    status: newStatus,
+    updatedAt: new Date().toISOString(),
+  });
 };
