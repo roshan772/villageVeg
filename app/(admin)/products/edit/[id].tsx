@@ -16,6 +16,18 @@ import {
 } from "../../../../src/services/productsService";
 
 const units = ["kg", "g", "pcs", "bunch"];
+const imageOptions = [
+  "default.png",
+  "beet.png",
+  "carrot.png",
+  "flower.png",
+  "gabbage.png",
+  "onion.png",
+  "potato.png",
+  "pumpkin.png",
+  "tomato.png",
+];
+
 
 export default function EditProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,7 +42,8 @@ export default function EditProductScreen() {
   const [stock, setStock] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [image, setImage] = useState("default.png");
+
 
   useEffect(() => {
     (async () => {
@@ -44,7 +57,8 @@ export default function EditProductScreen() {
         setStock(String(p.stock ?? 0));
         setCategory(p.category ?? "");
         setDescription(p.description ?? "");
-        setImageUrl(p.imageUrl ?? "");
+        setImage(p.image ?? "default.png");
+
       } catch (e: any) {
         Alert.alert("Error", e?.message ?? "Failed to load product");
         router.replace("/(admin)/products");
@@ -85,7 +99,7 @@ export default function EditProductScreen() {
         stock: Number(stock),
         category: category.trim(),
         description: description.trim(),
-        imageUrl: imageUrl.trim(),
+        image,
       });
 
       Alert.alert("Success", "Product updated!");
@@ -170,13 +184,32 @@ export default function EditProductScreen() {
         multiline
       />
 
-      <Field
-        label="Image URL (optional)"
-        value={imageUrl}
-        onChangeText={setImageUrl}
-        placeholder="https://..."
-        autoCapitalize="none"
-      />
+      <Text style={{ fontWeight: "700" }}>Product Image</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+        {imageOptions.map((img) => (
+          <Pressable
+            key={img}
+            onPress={() => setImage(img)}
+            style={{
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              borderRadius: 999,
+              borderWidth: 1,
+              backgroundColor: image === img ? "#111" : "transparent",
+            }}
+          >
+            <Text
+              style={{
+                color: image === img ? "#fff" : "#111",
+                fontWeight: "700",
+              }}
+            >
+              {img}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={{ color: "#64748b" }}>Selected: {image}</Text>
 
       <Pressable
         onPress={onSave}

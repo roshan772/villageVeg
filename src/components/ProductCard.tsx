@@ -1,12 +1,13 @@
 // src/components/ProductCard.tsx
 import React from "react";
-import { Pressable, Text, View, StyleSheet } from "react-native";
+import { Pressable, Text, View, StyleSheet,Image } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
 import { Product } from "../types/product";
+import { productImages } from "../utils/productImages";
 
 type Props = {
   product: Product;
@@ -50,6 +51,15 @@ export default function ProductCard({
         onPressOut={handlePressOut}
         style={styles.pressable}
       >
+        <Image
+          source={
+            productImages[product.image || "default.png"] ||
+            productImages["default.png"]
+          }
+          style={styles.image}
+          resizeMode="cover"
+        />
+
         {/* Product Name */}
         <Text style={styles.name}>{product.name}</Text>
 
@@ -132,6 +142,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  image: {
+    width: "100%",
+    height: 140,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+
   stock: {
     fontSize: 13,
     fontWeight: "600",

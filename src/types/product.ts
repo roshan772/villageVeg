@@ -7,7 +7,7 @@ export interface Product {
   stock: number;
   category: string;
   description?: string;
-  imageUrl?: string;
+  image?: string;
   createdAt: string;
   createdBy: string;
 }
