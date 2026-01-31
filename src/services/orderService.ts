@@ -33,7 +33,7 @@ export const placeOrder = async (items: CartItem[], total: number) => {
 };
 
 // READ orders for current user
-export const getOrders = async (): Promise<Order[]> => {
+export const getOrders = async (uid: string): Promise<Order[]> => {
   const user = auth.currentUser;
   if (!user) return [];
 
