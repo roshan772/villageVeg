@@ -123,7 +123,7 @@ export default function ProfileScreen() {
           {role === "admin" && (
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => router.push("/(admin)/products")}
+              onPress={() => router.push("/(admin)")}
               style={styles.actionRow}
             >
               <View
