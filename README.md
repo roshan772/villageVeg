@@ -48,8 +48,7 @@ Admin users can manage products and orders through an Admin Dashboard.
    -https://expo.dev/artifacts/eas/myifM6TJEknoR9XjmKqg5E.apk
 
 ### YouTube Demo Link:
-   -
-
+   -https://youtu.be/CMINv5s14yQ
 
 
 
