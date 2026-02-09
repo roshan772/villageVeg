@@ -127,7 +127,7 @@ export default function StartScreen() {
         <Animated.View style={styles.logoWrapper}>
           <View style={styles.logoBackground}>
             <Animated.Image
-              source={require("../../villageVeg/assets/images/logo.png")}
+              source={require("../assets/images/logo.png")}
               style={[styles.logo, animatedLogo]}
               resizeMode="contain"
             />

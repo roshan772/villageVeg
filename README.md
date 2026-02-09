@@ -1,50 +1,55 @@
-# Welcome to your Expo app 👋
+# VillageVeg (Fresh From Farm)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+VillageVeg is a mobile application built using **React Native (Expo)** and **Firebase**.  
+The app allows users to browse vegetables/fruits, place orders, and manage their profile.  
+Admin users can manage products and orders through an Admin Dashboard.
 
-## Get started
+---
 
-1. Install dependencies
+## Project Details
 
-   ```bash
-   npm install
-   ```
+- **Project Name:** VillageVeg (Fresh From Farm)
+- **Platform:** Android (Expo React Native)
+- **Backend:** Firebase Authentication + Firestore
+- **Build System:** Expo EAS Build
+- **Year:** 2026
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Features
 
-In the output, you'll find options to open the app in a
+### User Features
+- User Registration & Login (Firebase Auth)
+- View Products
+- Add to Cart
+- Place Orders
+- View Profile
+- Logout
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Admin Features
+- Admin role detection
+- Admin Dashboard access from Profile screen
+- Manage Products (Add / Edit / Delete)
+- Manage Orders (View / Update status)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## Technologies Used
 
-When you're ready, run:
+- React Native (Expo)
+- Expo Router
+- Firebase Authentication
+- Firebase Firestore Database
+- EAS Build (APK generation)
+- React Native Reanimated
+- Expo Vector Icons
 
-```bash
-npm run reset-project
-```
+### APK Build Link:
+   -https://expo.dev/artifacts/eas/myifM6TJEknoR9XjmKqg5E.apk
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### YouTube Demo Link:
+   -
 
-## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
